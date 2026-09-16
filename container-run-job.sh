@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Run every mounted prompt as an independent Pi session, then package all IDA
-# Nexus traces, linked Pi sessions, and worker logs into one portable ZIP.
+# MCP traces, linked Pi sessions, and Nexus worker logs into one portable ZIP.
 set -uo pipefail
 
 prompt_dir="${PROMPT_DIR:-/prompts}"
-archive="${LOG_ARCHIVE_PATH:-/state/ida-nexus-logs.zip}"
+archive="${LOG_ARCHIVE_PATH:-/state/ida-mcp-logs.zip}"
 run_id="${RUN_ID:-ida-analysis}"
 reliable_execution="${RUNNER_RELIABLE_EXECUTION:-false}"
 if [[ "$reliable_execution" != "true" && "$reliable_execution" != "false" ]]; then
@@ -31,7 +31,7 @@ for prompt in "${prompts[@]}"; do
     prompt_name="$(basename "$prompt")"
     stage_name="$(printf '%s-%03d-%s' "$run_id" "$stage" "$prompt_name")"
     echo "=== stage $stage/${#prompts[@]}: $prompt_name ==="
-    IDA_NEXUS_ID="$prompt_name" pi \
+    IDA_MCP_ID="$prompt_name" pi \
         "${pi_system_args[@]}" \
         --provider "$RUNNER_PROVIDER" \
         --model "$RUNNER_MODEL" \
@@ -68,10 +68,10 @@ for prompt in "${prompts[@]}"; do
 done
 
 mkdir -p "$(dirname "$archive")"
-ida-nexus logs --output "$archive" --force
+ida-mcp logs --output "$archive" --force
 archive_status=$?
 if ((archive_status != 0)); then
-    echo "failed to create IDA Nexus log archive (status $archive_status)" >&2
+    echo "failed to create IDA MCP log archive (status $archive_status)" >&2
     if ((status == 0)); then
         status=$archive_status
     fi

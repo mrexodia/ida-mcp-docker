@@ -30,14 +30,14 @@ RUN curl -fsSL https://fnm.vercel.app/install | bash -s -- --skip-shell \
     && pi --version \
     && uv --version
 
-# Install IDA Nexus from the published latest branch. Keep its uv project warm
+# Install IDA MCP from the published latest branch. Keep its uv project warm
 # and expose its CLI globally so jobs can produce a portable log ZIP.
-RUN pi install git:github.com/HexRaysSA/ida-nexus@latest \
-    && extension_dir="$(find /root/.pi/agent/git -type f -name ida-nexus.ts -printf '%h\n' -quit)" \
+RUN pi install git:github.com/HexRaysSA/ida-mcp@latest \
+    && extension_dir="$(find /root/.pi/agent/git -type f -name ida-mcp.ts -printf '%h\n' -quit)" \
     && test -n "$extension_dir" \
     && uv sync --project "$extension_dir" --no-dev \
-    && uv run --with=ida-hcli --project "$extension_dir" ida-nexus --help >/dev/null \
-    && ln -s "$extension_dir/.venv/bin/ida-nexus" /usr/local/bin/ida-nexus
+    && uv run --with=ida-hcli --project "$extension_dir" ida-mcp --help >/dev/null \
+    && ln -s "$extension_dir/.venv/bin/ida-mcp" /usr/local/bin/ida-mcp
 
 COPY entrypoint.sh container-run-job.sh extract-final-response.py /opt/ida-runner/
 RUN chmod +x \

@@ -334,11 +334,11 @@ def validate_archive(path: Path, *, require_complete: bool = True) -> dict[str, 
         raise RuntimeError(f"expected log archive was not created: {path}")
     with zipfile.ZipFile(path) as archive:
         try:
-            toc = json.loads(archive.read("ida-nexus-logs.json"))
+            toc = json.loads(archive.read("ida-mcp-logs.json"))
         except KeyError as error:
-            raise RuntimeError("log archive has no ida-nexus TOC") from error
-        if toc.get("format") != "ida-nexus-logs" or toc.get("schema") != 1:
-            raise RuntimeError("unsupported ida-nexus log archive")
+            raise RuntimeError("log archive has no ida-mcp TOC") from error
+        if toc.get("format") != "ida-mcp-logs" or toc.get("schema") != 1:
+            raise RuntimeError("unsupported ida-mcp log archive")
         files = toc.get("files") or []
         semantic = sum(item.get("kind") == "semantic_session" for item in files)
         agents = sum(item.get("kind") == "agent_session" for item in files)
@@ -568,7 +568,7 @@ def main() -> int:
             "run": str(run_root),
             "workspace": str(workspace),
             "state": str(state),
-            "log_archive": str(state / "ida-nexus-logs.zip"),
+            "log_archive": str(state / "ida-mcp-logs.zip"),
         },
     }
     write_manifest(manifest_path, manifest)
@@ -632,7 +632,7 @@ def main() -> int:
         manifest["duration_seconds"] = round(time.monotonic() - started, 3)
         manifest["container_exit_code"] = status
 
-        archive_path = state / "ida-nexus-logs.zip"
+        archive_path = state / "ida-mcp-logs.zip"
         try:
             archive_details = validate_archive(
                 archive_path, require_complete=status == 0

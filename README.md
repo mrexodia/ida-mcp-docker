@@ -199,7 +199,7 @@ runs/<timestamp>-<name>-<id>/
   prompts/                    rendered copies of submitted prompt templates
   state/
     console.log
-    ida-nexus-logs.zip
+    ida-mcp-logs.zip
     pi-sessions/              native Pi JSONL sessions
     ida-nexus/
       sessions/               native semantic IDA traces
@@ -211,7 +211,7 @@ runs/<timestamp>-<name>-<id>/
 The manifest records hashes and sizes for imported Pi config/resources, the
 model catalog, and both source and rendered prompts, but not configuration file
 contents. For successful runs, the launcher
-validates that `ida-nexus-logs.zip` contains at least one semantic IDA session
+validates that `ida-mcp-logs.zip` contains at least one semantic IDA session
 and its linked Pi transcript. The ZIP has its own TOC, source-path map, sizes,
 and SHA-256 hashes. Its SHA-256 is also recorded in the run manifest.
 
@@ -245,13 +245,13 @@ a substitute for a dedicated malware-analysis host.
 
 ## Inspect a log archive
 
-The portable archive can be opened by IDA Nexus tooling or inspected as a
+The portable archive can be opened by IDA MCP tooling or inspected as a
 normal ZIP. It contains:
 
 - `sessions/` — semantic IDA tool calls/results
 - `agent-sessions/` — linked Pi transcripts
 - `logs/` — worker operational logs
-- `ida-nexus-logs.json` — archive TOC
+- `ida-mcp-logs.json` — archive TOC
 
 Raw state remains alongside it under `state/` for troubleshooting.
 
