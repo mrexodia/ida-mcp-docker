@@ -115,6 +115,25 @@ def test_complete_site_reuses_native_logs_and_resolves_links(fixture):
                 assert (page.parent / unquote(parts.path)).is_file(), (page, href)
 
 
+def test_large_text_is_plain_and_paginated(fixture, monkeypatch):
+    monkeypatch.setattr("run_site.site.LARGE_TEXT_PAGE_CHARS", 1024)
+    source = fixture.run / "workspace/large.json"
+    source.write_text("<tag>&\n" * 400, encoding="utf-8")
+    build_site(fixture)
+
+    first = fixture.output / "artifacts/workspace/large.json.html"
+    second = fixture.output / "artifacts/workspace/large.json.parts/0002.html"
+    third = fixture.output / "artifacts/workspace/large.json.parts/0003.html"
+    assert first.is_file() and second.is_file() and third.is_file()
+    first_html = first.read_text(encoding="utf-8")
+    second_html = second.read_text(encoding="utf-8")
+    assert "Large text artifact; shown as paginated plain text." in first_html
+    assert "Part 1 of 3" in first_html
+    assert "&lt;tag&gt;&amp;" in first_html
+    assert 'href="large.json.parts/0002.html"' in first_html
+    assert 'href="../large.json.html"' in second_html
+
+
 def test_snapshot_mismatch_does_not_publish_partial_output(fixture):
     (fixture.run / "workspace/renamed.i64").write_bytes(b"changed")
     with pytest.raises(ValueError, match="hash changed"):

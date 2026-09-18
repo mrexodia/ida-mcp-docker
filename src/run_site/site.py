@@ -39,6 +39,10 @@ BINARY_SUFFIXES = {
     ".pdf",
 }
 SIDECARS = {".id0", ".id1", ".id2", ".nam", ".til"}
+# Pygments can expand repetitive JSON by more than 10x. Keep large rendered text
+# pages comfortably below Cloudflare Pages' 25 MiB per-file upload limit even
+# when every character needs HTML entity escaping.
+LARGE_TEXT_PAGE_CHARS = 3 * 1024 * 1024
 
 
 def escape(value: object) -> str:
@@ -71,6 +75,57 @@ def text_code(content: str, filename: str = "", language: str = "") -> str:
     except ClassNotFound:
         lexer = TextLexer()
     return highlight(content, lexer, HtmlFormatter(cssclass="highlight", wrapcode=True))
+
+
+def split_large_text(content: str) -> list[str]:
+    chunks = []
+    start = 0
+    while start < len(content):
+        end = min(start + LARGE_TEXT_PAGE_CHARS, len(content))
+        if end < len(content):
+            newline = content.rfind("\n", start, end)
+            if newline >= start:
+                end = newline + 1
+        chunks.append(content[start:end])
+        start = end
+    return chunks or [""]
+
+
+def plain_text(content: str) -> str:
+    return (
+        '<div class="highlight"><pre><code>'
+        + html.escape(content, quote=False)
+        + "</code></pre></div>"
+    )
+
+
+def render_large_text(
+    renderer, page: str, title: str, heading: str, content: str
+) -> None:
+    chunks = split_large_text(content)
+    pages = [page] + [
+        f"{page.removesuffix('.html')}.parts/{index:04d}.html"
+        for index in range(2, len(chunks) + 1)
+    ]
+    for index, (chunk, chunk_page) in enumerate(zip(chunks, pages), 1):
+        links = []
+        if index > 1:
+            links.append(
+                f'<a href="{relative(pages[index - 2], chunk_page)}">← Previous</a>'
+            )
+        links.append(f"<span>Part {index} of {len(chunks)}</span>")
+        if index < len(chunks):
+            links.append(f'<a href="{relative(pages[index], chunk_page)}">Next →</a>')
+        navigation = '<nav class="large-text-nav">' + "".join(links) + "</nav>"
+        renderer.page(
+            chunk_page,
+            title,
+            heading
+            + '<p class="muted">Large text artifact; shown as paginated plain text.</p>'
+            + navigation
+            + plain_text(chunk)
+            + navigation,
+        )
 
 
 def file_tree(artifacts: list[dict]) -> str:
@@ -126,7 +181,7 @@ def usage_summary(metrics: dict) -> str:
 
     items = (
         f'<div class="usage-item usage-total"><span>Total cost</span>'
-        f'<strong>{cost("total")}</strong><small>{tokens("total")} tokens</small></div>'
+        f"<strong>{cost('total')}</strong><small>{tokens('total')} tokens</small></div>"
     )
     items += "".join(
         f'<div class="usage-item"><span>{label}</span><strong>{tokens(key)}</strong><small>{cost(key)}</small></div>'
@@ -569,13 +624,18 @@ def assemble(run: Path, output: Path, args) -> None:
             if content is None:
                 kind = "binary"
                 body = f'<p>{source.stat().st_size:,} bytes</p><p class="muted">SHA-256</p><code class="break">{digest(source)}</code><p>No database matched this binary.</p>'
+            elif len(content) > LARGE_TEXT_PAGE_CHARS:
+                kind = "markdown" if source.suffix.lower() == ".md" else "code"
+                render_large_text(renderer, page, source.name, heading, content)
+                body = None
             elif source.suffix.lower() == ".md":
                 kind = "markdown"
                 body = f'<article class="prose">{renderer.markdown(content, path, page)}</article>'
             else:
                 kind = "code"
                 body = text_code(content, source.name)
-            renderer.page(page, source.name, heading + body)
+            if body is not None:
+                renderer.page(page, source.name, heading + body)
         catalog.append(
             {"path": path, "page": page, "kind": kind, "bytes": source.stat().st_size}
         )

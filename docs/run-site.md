@@ -308,7 +308,9 @@ workspace dotfiles are also skipped. Pagecast links are unlisted by default;
 use its password option if access should be restricted.
 
 For large runs, Cloudflare currently limits each static asset to 25 MiB and Free
-plan sites to 20,000 files. The exporter produces one file per function/type
+plan sites to 20,000 files. To stay below the per-asset limit, text artifacts
+larger than 3 MiB are rendered as paginated plain text instead of a single
+syntax-highlighted page. The exporter also produces one file per function/type
 plus listing chunks, so file count can matter even when the total size is small.
 See [Cloudflare Pages limits](https://developers.cloudflare.com/pages/platform/limits/)
 and [Direct Upload](https://developers.cloudflare.com/pages/get-started/direct-upload/).
