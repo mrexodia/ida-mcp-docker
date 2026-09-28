@@ -16,7 +16,7 @@ ENV FNM_DIR=/root/.local/share/fnm \
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates curl git tini unzip \
+    && apt-get install -y --no-install-recommends ca-certificates curl git tini unzip p7zip-full \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Node through fnm, Pi, and uv.
